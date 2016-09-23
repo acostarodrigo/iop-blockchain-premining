@@ -16,6 +16,8 @@ import org.fermatj.store.BlockStoreException;
 import org.fermatj.store.MemoryBlockStore;
 import org.fermatj.wallet.WalletTransaction;
 
+import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -103,9 +105,11 @@ public class FermatNetwork {
         if (NETWORK == RegTestParams.get())
         {
             peerGroup.setUseLocalhostPeerWhenPossible(true);
+            peerGroup.addAddress(new PeerAddress(new InetSocketAddress("127.0.0.1", 8485)));
             minBroadcastConnections = 1;
         } else {
             peerGroup.addPeerDiscovery(new DnsDiscovery(NETWORK));
+            peerGroup.setMaxConnections(6);
             minBroadcastConnections = 2;
         }
 
@@ -122,11 +126,28 @@ public class FermatNetwork {
             throw new CantConnectToFermatBlockchainException("After blockchain download completed, no UTXO transactions where found. Possible wrong private key.\nCan't go on without coins.");
 
         // we should never have more than one unspent transaction on this wallet. if so something went really wrong.
-        if (wallet.getTransactionPool(WalletTransaction.Pool.UNSPENT).size() > 1)
-            throw new CantConnectToFermatBlockchainException("We have more than 1 unspent transaction. Can't go on. Manual intervention required.");
+        if (wallet.getTransactionPool(WalletTransaction.Pool.UNSPENT).size() > 1){
+            //I will use the biggest input, as long as the difference is bigger than a block coin
+            Coin biggestValue = null;
+            Transaction previousTransaction = null;
+            for (Transaction transaction : wallet.getTransactionPool(WalletTransaction.Pool.UNSPENT).values()){
+                if (previousTransaction == null){
+                    previousTransaction = transaction;
+                    biggestValue = transaction.getValue(this.wallet);
+                    continue;
+                }
 
+                if (transaction.getValue(this.wallet).isGreaterThan(biggestValue))
+                    previousTransaction = transaction;
+            }
 
-        genesisTransaction = wallet.getTransactionPool(WalletTransaction.Pool.UNSPENT).values().iterator().next();
+            if (previousTransaction == null)
+                throw new CantConnectToFermatBlockchainException("We have more than 1 unspent transaction. Can't go on. Manual intervention required.");
+
+            genesisTransaction = previousTransaction;
+        } else
+            genesisTransaction = wallet.getTransactionPool(WalletTransaction.Pool.UNSPENT).values().iterator().next();
+
         if (genesisTransaction == null)
             throw new CantConnectToFermatBlockchainException("After blockchain download completed, no UTXO transactions where found. Possible wrong private key.\nCan't go on without coins.");
     }
@@ -151,9 +172,9 @@ public class FermatNetwork {
 
                 //import the private key into the wallet.
                 if (this.privateKey == null)
-                    internalWallet.importKey(getPrivateKeyFromDumpKey());
-                else
-                    internalWallet.importKey(privateKey);
+                    this.privateKey = getPrivateKeyFromDumpKey();
+
+                internalWallet.importKey(privateKey);
             } catch (AddressFormatException e) {
                 //if I can't get the ECKey to import I can't go on.
                 throw new CantConnectToFermatBlockchainException("The private key provided " + this.MINING_PRIVATE_KEY + " is not valid.");

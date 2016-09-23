@@ -118,7 +118,7 @@ public class TransactionBuilder {
     private void addNotTimeContrainedTransaction(FermatTransaction fermatTransaction) {
         Coin fermats = fermatTransaction.getFermats();
         // instead of using the public key, I will send it to the address
-        Address address = fermatTransaction.getPublicKey().toAddress(Main.getNetworkParameters());
+        Address address = fermatTransaction.getAddress();
         TransactionOutput output = new TransactionOutput(this.wallet.getParams(), this.genesisTransaction, fermats, address);
         transaction.addOutput(output);
 
@@ -138,7 +138,9 @@ public class TransactionBuilder {
         ScriptChunk pushData4 = new ScriptChunk(8, epochTime);
         ScriptChunk locktimeVerify = new ScriptChunk(ScriptOpCodes.OP_NOP2, null);
         ScriptChunk drop = new ScriptChunk(ScriptOpCodes.OP_DROP, null);
-        ScriptChunk pushData = new ScriptChunk(33, fermatTransaction.getPublicKey().getPubKey());
+        ScriptChunk dup = new ScriptChunk(ScriptOpCodes.OP_DUP, null);
+        ScriptChunk hash = new ScriptChunk(ScriptOpCodes.OP_HASH160, fermatTransaction.getAddress().getHash160());
+        ScriptChunk equal = new ScriptChunk(ScriptOpCodes.OP_EQUALVERIFY, null);
         ScriptChunk checksig = new ScriptChunk(ScriptOpCodes.OP_CHECKSIG, null);
 
 
@@ -146,7 +148,9 @@ public class TransactionBuilder {
         scriptBuilder.addChunk(pushData4);
         scriptBuilder.addChunk(locktimeVerify);
         scriptBuilder.addChunk(drop);
-        scriptBuilder.addChunk(pushData);
+        scriptBuilder.addChunk(dup);
+        scriptBuilder.addChunk(hash);
+        scriptBuilder.addChunk(equal);
         scriptBuilder.addChunk(checksig);
 
         Script redeemScript = scriptBuilder.build();

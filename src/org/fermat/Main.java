@@ -116,6 +116,9 @@ public class Main {
         try {
             fermatTransactionBuilder = new FermatTransactionBuilder(inputFile);
             fermatTransactionBuilder.generateTransactions();
+        } catch (AddressFormatException addressFormat) {
+          System.err.println("Provided Address on input file is not valid.");
+            System.exit(-1);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

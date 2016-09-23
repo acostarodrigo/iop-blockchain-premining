@@ -64,7 +64,7 @@ public class ExecutionLogger {
         List<String> lines = new ArrayList<>();
         lines.add("Name,PublicKey,Fermats,DaysForPayment"); //columns header
         for (FermatTransaction fermatTransaction : fermatTransactionBuilder.getFermatTransactions()){
-            lines.add(fermatTransaction.getAlias()+","+fermatTransaction.getPublicKey().getPublicKeyAsHex()+","+fermatTransaction.getFermats().toPlainString()+","+fermatTransaction.getDaysForPayment());
+            lines.add(fermatTransaction.getAlias()+","+fermatTransaction.getAddress().toString()+","+fermatTransaction.getFermats().toPlainString()+","+fermatTransaction.getDaysForPayment());
         }
         return lines;
     }

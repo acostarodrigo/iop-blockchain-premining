@@ -1,3 +1,3 @@
-Name,PublicKey,Fermats,DaysForPayment
-Rodrigo,020a398e58669c6fa1951f39822e1e202c5406485c6fe9ac4fc0e228462e6fb337,10,1
-Luis,03ee81b1abc9d7da63a02126bb6f9f1a2adeeec8d3dfee994fe3f2df0689c465e5,5
+Name,Address,Fermats,DaysForPayment,Send,transaction
+Rodrigo,uWECqjmtJ4JH6qX22KakUKw7BJA9hfxRke,10,1, x
+Luis,uduh2xN8CByFVDP6bY3PG8uXo8bVeN5eGf,5,0,yes

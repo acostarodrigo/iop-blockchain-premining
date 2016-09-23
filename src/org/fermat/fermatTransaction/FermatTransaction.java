@@ -2,6 +2,7 @@ package org.fermat.fermatTransaction;
 
 import com.google.common.base.Preconditions;
 import org.fermat.Main;
+import org.fermatj.core.Address;
 import org.fermatj.core.Coin;
 import org.fermatj.core.ECKey;
 import org.fermatj.core.TransactionOutput;
@@ -15,7 +16,7 @@ import java.util.Date;
  */
 public class FermatTransaction {
     private String alias;
-    private ECKey publicKey;
+    private Address address;
     private Coin fermats;
     private boolean isTimeContrained;
     private int daysForPayment;
@@ -27,16 +28,16 @@ public class FermatTransaction {
     /**
      * default constructor
      * @param alias
-     * @param publicKey
+     * @param address
      * @param fermats
      */
-    public FermatTransaction(String alias, ECKey publicKey, Coin fermats) {
+    public FermatTransaction(String alias, Address address, Coin fermats) {
         Preconditions.checkNotNull(alias);
-        Preconditions.checkNotNull(publicKey);
+        Preconditions.checkNotNull(address);
         Preconditions.checkNotNull(fermats);
 
         this.alias = alias;
-        this.publicKey = publicKey;
+        this.address = address;
         this.fermats = fermats;
 
         this.isTimeContrained = false;
@@ -45,18 +46,18 @@ public class FermatTransaction {
     /**
      * constructor with date
      * @param alias
-     * @param publicKey
+     * @param address
      * @param fermats
      * @param daysForPayment
      */
-    public FermatTransaction(String alias, ECKey publicKey, Coin fermats, int daysForPayment) {
+    public FermatTransaction(String alias, Address address, Coin fermats, int daysForPayment) {
         Preconditions.checkNotNull(alias);
-        Preconditions.checkNotNull(publicKey);
+        Preconditions.checkNotNull(address);
         Preconditions.checkNotNull(fermats);
         Preconditions.checkNotNull(daysForPayment);
 
         this.alias = alias;
-        this.publicKey = publicKey;
+        this.address = address;
         this.fermats = fermats;
         this.daysForPayment = daysForPayment;
 
@@ -94,8 +95,8 @@ public class FermatTransaction {
         return alias;
     }
 
-    public ECKey getPublicKey() {
-        return this.publicKey;
+    public Address getAddress() {
+        return this.address;
     }
 
     public Coin getFermats() {
@@ -132,6 +133,7 @@ public class FermatTransaction {
                 "alias='" + alias + '\'' +
                 ", fermats=" + fermats +
                 ", paymentDate=" + paymentDate +
+                ", Address=" + address.toString() +
                 ", paymentEpochTime=" + paymentEpochTime +
                 '}';
     }

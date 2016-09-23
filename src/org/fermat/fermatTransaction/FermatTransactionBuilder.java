@@ -28,14 +28,14 @@ public class FermatTransactionBuilder {
 
     //class constants
     private final File inputFile;
-    private int EXPECTED_COLUMN_COUNT = 4;
+    private int EXPECTED_COLUMN_COUNT = 6;
 
 
     /**
      * column headers enum
      */
     private enum ColumnHeaders{
-        Name (0), PublicKey (1), Fermats (2), DaysForPayment (3);
+        Name (0), Address (1), Fermats (2), DaysForPayment (3), Send(4), Transaction(5);
 
         private int index;
 
@@ -48,11 +48,15 @@ public class FermatTransactionBuilder {
                 case 0:
                     return Name;
                 case 1:
-                    return PublicKey;
+                    return Address;
                 case 2:
                     return Fermats;
                 case 3:
                     return DaysForPayment;
+                case 4:
+                    return Send;
+                case 5:
+                    return Transaction;
                 default: return null;
             }
         }
@@ -104,7 +108,7 @@ public class FermatTransactionBuilder {
 
 
         // validate columns name based in position
-        for (int i=0; i<4; i++){
+        for (int i=0; i<EXPECTED_COLUMN_COUNT-1; i++){
             if (!columns.get(i).equalsIgnoreCase(ColumnHeaders.getByIndex(i).name()))
                 throw new TransactionsInputFileNotValidException("Missing column " +  ColumnHeaders.getByIndex(i).toString() + " on input file. Found columns are " + columns.toString());
         }
@@ -126,13 +130,20 @@ public class FermatTransactionBuilder {
         int recordCount = fileReader.getRows().size();
 
         for (List<String> row : fileReader.getRows()){
-            String name = row.get(0);
+            // if no mark in the send column, we skeep the transaction
+            if (row.size() < 5 || row.get(ColumnHeaders.Send.index).isEmpty())
+                continue;
+
+            if (row.size() > 5 && !row.get(ColumnHeaders.Transaction.index).isEmpty())
+                throw new TransactionsInputFileNotValidException("Transaction marked to send already has a previous IoP transaction assigned");
+
+            String name = row.get(ColumnHeaders.Name.index);
 
             // create the publicKey address
-            ECKey publicKey = ECKey.fromPublicOnly(Hex.decode(row.get(1)));
+            Address address = new Address(Main.getNetworkParameters(), row.get(ColumnHeaders.Address.index));
 
             // get the amount of Fermats
-            long fermatQty = Long.parseLong(row.get(2));
+            long fermatQty = Long.parseLong(row.get(ColumnHeaders.Fermats.index));
             Coin fermats = getFermatCoin(fermatQty);
 
             totalFermats = totalFermats + fermats.getValue();
@@ -140,14 +151,14 @@ public class FermatTransactionBuilder {
             FermatTransaction fermatTransaction;
 
             // create the fermat transaction, adding the date column if needed.
-            if (row.size() == 4) {
-                int days = Integer.parseInt(row.get(3));
+            if (!row.get(ColumnHeaders.DaysForPayment.index).isEmpty()) {
+                int days = Integer.parseInt(row.get(ColumnHeaders.DaysForPayment.index));
                 if (days > 0)
-                    fermatTransaction = new FermatTransaction(name, publicKey, fermats, days);
+                    fermatTransaction = new FermatTransaction(name, address, fermats, days);
                 else
-                    fermatTransaction = new FermatTransaction(name, publicKey, fermats);
+                    fermatTransaction = new FermatTransaction(name, address, fermats);
             } else
-                fermatTransaction = new FermatTransaction(name, publicKey, fermats);
+                fermatTransaction = new FermatTransaction(name, address, fermats);
 
             fermatTransactions.add(fermatTransaction);
         }
